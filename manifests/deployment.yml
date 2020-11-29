@@ -1,19 +1,19 @@
 apiVersion : apps/v1
 kind: Deployment
 metadata:
-  name: pensnodehttp 
+  name: node-azure 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pensnodehttp
+      app: node-azure
   template:
     metadata:
       labels:
-        app: pensnodehttp 
+        app: node-azure 
     spec:
       containers:
-        - name: pensnodehttp 
-          image: opensoacr.azurecr.io/pensnodehttp
+        - name: node-azure 
+          image: opensoacr.azurecr.io/openso/node
           ports:
           - containerPort: 8080
