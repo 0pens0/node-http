@@ -43,7 +43,7 @@ stages:
     displayName: Deploy
     pool:
       vmImage: $(vmImageName)
-    environment: 'tkgm-aws-k8s1.default'
+    environment: 'dev-azure-tbs.devops'
     strategy:
       runOnce:
         deploy:
