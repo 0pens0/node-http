@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: node-azure 
-          image: opensoacr.azurecr.io/openso/node
+          image: harbor.tanzuworld.com/openso/node
           ports:
           - containerPort: 8080
