@@ -43,7 +43,7 @@ stages:
     displayName: Deploy
     pool:
       vmImage: $(vmImageName)
-    environment: 'tbs-demo-env.default'
+    environment: 'tkgm-aws-k8s1.default'
     strategy:
       runOnce:
         deploy:
