@@ -63,7 +63,7 @@ stages:
 # CopyManifests
 - stage: DeployToK8S
   displayName: Deploy stage
-  dependsOn: CopyFilesToAgent
+  dependsOn: WaitForTBS
 
   jobs:
   - deployment: Deploy
@@ -101,7 +101,7 @@ stages:
               namespace: 'devops'
               action: deploy
               manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yaml
+                $(Pipeline.Workspace)/manifests/deployment.yml
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |
