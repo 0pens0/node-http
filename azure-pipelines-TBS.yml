@@ -63,7 +63,7 @@ stages:
 # CopyManifests
 - stage: DeployToK8S
   displayName: Deploy stage
-  dependsOn: WaitForTBS
+  dependsOn: CreateTBSImage
 
   jobs:
   - deployment: Deploy
