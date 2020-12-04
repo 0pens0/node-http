@@ -1,0 +1,108 @@
+
+# Deploy to Tanzu Kubernetes Grid
+# Build and push image to Harbor with Tanzu Build Service
+# Clone the repo, change the manifests and run the pipeline.
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'd09d49e0-53b4-4a86-9522-072515419b6b'
+  imagePullSecret: 'opensoacr0a1e-auth'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+  
+
+stages:
+- stage: CopyFilesToAgent
+  displayName: Build stage
+  jobs:  
+  - job: Build
+    displayName: CopyFilesToAgent
+    pool:
+      vmImage: $(vmImageName)
+    steps:        
+    - upload: manifests
+      artifact: manifests
+
+- stage: CreateTBSImage
+  displayName: Build with TBS
+  dependsOn: CopyFilesToAgent
+  jobs:
+  - deployment: Deploy
+    displayName: Build with TBS
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Deploy-to-Dev-aws-tbs.builds'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              namespace: 'builds'
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/tbs-image.yaml
+
+# Delay
+  - job: WaitForTBS
+    pool: Server
+    steps:
+      - task: Delay@1
+        inputs:
+          delayForMinutes: '1'
+ 
+# CopyManifests
+- stage: DeployToK8S
+  displayName: Deploy stage
+  dependsOn: CopyFilesToAgent
+
+  jobs:
+  - deployment: Deploy
+    displayName: DeployToK8S
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Deploy-to-Dev-aws-tbs.devops'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              namespace: 'builds'
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/tbs-image.yaml
+          - task: KubernetesManifest@0
+            inputs:
+              action: 'delete'
+              kubernetesServiceConnection: 'dev-aws-tbs'
+              namespace: 'devops'
+              arguments: 'deploy,secret --all'
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              namespace: 'devops'
+              action: createSecret
+              secretName: $(imagePullSecret)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              namespace: 'devops'
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yaml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                - task: KubernetesManifest@0
